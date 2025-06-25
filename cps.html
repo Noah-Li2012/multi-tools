@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPS Tester</title>
+    <!-- Vanta.js Clouds Background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        #vanta-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        .card {
+            background: rgba(255,255,255,0.95);
+            padding: 36px 44px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1.5px 6px rgba(79,140,255,0.08);
+            min-width: 350px;
+            max-width: 400px;
+            width: 100%;
+            z-index: 1;
+            position: relative;
+            transition: box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            animation: fadeInCard 0.8s cubic-bezier(.4,2,.6,1) 0.2s forwards;
+        }
+        @keyframes fadeInCard {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        h1 {
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #4f8cff;
+            text-shadow: 0 2px 8px #b3d1ff55;
+            font-size: 2.1rem;
+        }
+        .custom-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            margin-top: 2px;
+        }
+        .custom-time label {
+            font-size: 1rem;
+            color: #4f8cff;
+            font-weight: 500;
+        }
+        .custom-time input[type="number"] {
+            width: 60px;
+            padding: 6px 8px;
+            border: 1.5px solid #bfc9d1;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+            background: #fafdff;
+        }
+        .custom-time input[type="number"]:focus {
+            border: 1.5px solid #4f8cff;
+        }
+        .toggle-mode {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .toggle-label {
+            font-size: 1rem;
+            color: #4f8cff;
+            font-weight: 500;
+        }
+        .toggle-btn {
+            background: #eaf3ff;
+            border: 1.5px solid #bfc9d1;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 1rem;
+            color: #4f8cff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+        }
+        .toggle-btn.active {
+            background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+            color: #fff;
+            border: 1.5px solid #4f8cff;
+        }
+        .cps-area {
+            width: 220px;
+            height: 220px;
+            background: linear-gradient(135deg, #4f8cff 60%, #aee2ff 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 28px 0 18px 0;
+            box-shadow: 0 4px 24px #4f8cff33;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+        .cps-area:active {
+            box-shadow: 0 8px 32px #4f8cff55;
+            transform: scale(0.97);
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            transform: scale(0);
+            animation: ripple 0.5s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+        .stats {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: #4f8cff;
+            font-weight: 500;
+        }
+        .timer {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .btn {
+            margin-top: 18px;
+            padding: 10px 28px;
+            background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #b3d1ff33;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        .btn:hover {
+            background: linear-gradient(90deg, #357ae8 60%, #7fcfff 100%);
+            box-shadow: 0 4px 16px #b3d1ff55;
+            transform: translateY(-2px) scale(1.03);
+        }
+        /* Popup styles */
+        .popup-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.25);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInPopupBg 0.3s;
+        }
+        @keyframes fadeInPopupBg {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .popup {
+            background: rgba(255,255,255,0.98);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(79,140,255,0.12);
+            padding: 36px 32px 28px 32px;
+            min-width: 280px;
+            max-width: 90vw;
+            text-align: center;
+            animation: popupIn 0.4s cubic-bezier(.4,2,.6,1);
+            position: relative;
+        }
+        @keyframes popupIn {
+            from { opacity: 0; transform: scale(0.85) translateY(40px);}
+            to { opacity: 1; transform: scale(1) translateY(0);}
+        }
+        .popup h2 {
+            color: #4f8cff;
+            margin-bottom: 12px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .popup .score {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2ecc40;
+            margin-bottom: 10px;
+        }
+        .popup .popup-btn {
+            margin-top: 18px;
+            padding: 10px 28px;
+            background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #b3d1ff33;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        .popup .popup-btn:hover {
+            background: linear-gradient(90deg, #357ae8 60%, #7fcfff 100%);
+            box-shadow: 0 4px 16px #b3d1ff55;
+            transform: translateY(-2px) scale(1.03);
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    <div class="card">
+        <h1>CPS Tester</h1>
+        <div class="custom-time">
+            <label for="customTime">Time:</label>
+            <input type="number" id="customTime" min="1" max="60" value="5">
+            <span style="color:#4f8cff;font-weight:500;">s</span>
+        </div>
+        <div class="stats">
+            <span id="bestCps">Best: 0</span>
+            <span id="clicks">Clicks: 0</span>
+        </div>
+        <div class="timer" id="timer">Time: 0.0s</div>
+        <div class="cps-area" id="cpsArea">Click Me!</div>
+        <div style="margin-top:18px;font-size:1.3rem;font-weight:600;color:#4f8cff;">
+            CPS: <span id="cps">0.00</span>
+        </div>
+        <button class="btn" onclick="resetTest()">Restart</button>
+    </div>
+    <!-- Popup -->
+    <div id="popupBg" class="popup-bg" style="display:none;">
+        <div class="popup">
+            <h2>Test Complete!</h2>
+            <div class="score" id="popupScore">CPS: 0.00</div>
+            <div style="color:#888;font-size:1.1rem;margin-bottom:10px;">
+                Clicks: <span id="popupClicks">0</span>
+            </div>
+            <button class="popup-btn" onclick="closePopup()">OK</button>
+        </div>
+    </div>
+    <script>
+        // Vanta clouds background
+        VANTA.CLOUDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00
+        });
+
+        // CPS logic
+        const cpsArea = document.getElementById('cpsArea');
+        const cpsLabel = document.getElementById('cps');
+        const timerLabel = document.getElementById('timer');
+        const clicksLabel = document.getElementById('clicks');
+        const bestCpsLabel = document.getElementById('bestCps');
+        const popupBg = document.getElementById('popupBg');
+        const popupScore = document.getElementById('popupScore');
+        const popupClicks = document.getElementById('popupClicks');
+        const customTimeInput = document.getElementById('customTime');
+        let clicks = 0;
+        let startTime = null;
+        let timer = null;
+        let duration = parseInt(customTimeInput.value, 10) || 5; // seconds
+        let bestCps = 0;
+        let running = false;
+
+        function showCps(cps) {
+            cpsLabel.textContent = cps.toFixed(2);
+        }
+
+        function showClicks() {
+            clicksLabel.textContent = "Clicks: " + clicks;
+        }
+
+        function showTimer(time) {
+            timerLabel.textContent = "Time: " + time.toFixed(1) + "s";
+        }
+
+        function showBestCps() {
+            bestCpsLabel.textContent = "Best: " + bestCps.toFixed(2);
+        }
+
+        function startTest() {
+            if (running) return;
+            running = true;
+            clicks = 0;
+            showClicks();
+            showCps(0);
+            duration = parseInt(customTimeInput.value, 10) || 5;
+            showTimer(duration);
+            startTime = Date.now();
+            timer = setInterval(update, 20);
+        }
+
+        function update() {
+            let elapsed = (Date.now() - startTime) / 1000;
+            let left = Math.max(0, duration - elapsed);
+            showTimer(left);
+            let cps = clicks / (elapsed > 0 ? elapsed : 1);
+            showCps(cps);
+            if (left <= 0) {
+                clearInterval(timer);
+                running = false;
+                if (cps > bestCps) {
+                    bestCps = cps;
+                    showBestCps();
+                }
+                cpsArea.textContent = "Done!";
+                showPopup(cps, clicks);
+            }
+        }
+
+        function resetTest() {
+            clearInterval(timer);
+            running = false;
+            clicks = 0;
+            showClicks();
+            showCps(0);
+            duration = parseInt(customTimeInput.value, 10) || 5;
+            showTimer(duration);
+            cpsArea.textContent = "Click Me!";
+        }
+
+        // Ripple effect
+        cpsArea.addEventListener('mousedown', function(e) {
+            // Only count left (0) or right (2) mouse buttons
+            if (e.button !== 0 && e.button !== 2) return;
+            if (!running) {
+                startTest();
+                cpsArea.textContent = "0";
+            }
+            if (!running) return;
+            clicks++;
+            showClicks();
+            cpsArea.textContent = clicks;
+            // Ripple
+            const circle = document.createElement('span');
+            circle.className = 'ripple';
+            const rect = cpsArea.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            circle.style.width = circle.style.height = size + 'px';
+            circle.style.left = (e.clientX - rect.left - size/2) + 'px';
+            circle.style.top = (e.clientY - rect.top - size/2) + 'px';
+            cpsArea.appendChild(circle);
+            setTimeout(() => circle.remove(), 500);
+        });
+
+        // Prevent context menu on right click
+        cpsArea.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Prevent text selection on double click
+        cpsArea.onmousedown = e => e.preventDefault();
+
+        // Popup logic
+        function showPopup(cps, clicks) {
+            popupScore.textContent = "CPS: " + cps.toFixed(2);
+            popupClicks.textContent = clicks;
+            popupBg.style.display = "flex";
+            setTimeout(() => {
+                document.querySelector('.popup-btn').focus();
+            }, 100);
+        }
+        function closePopup() {
+            popupBg.style.display = "none";
+            resetTest();
+        }
+
+        // Update timer if custom time changes
+        customTimeInput.addEventListener('input', function() {
+            if (!running) {
+                duration = parseInt(customTimeInput.value, 10) || 5;
+                showTimer(duration);
+            }
+        });
+
+        // Initialize
+        showClicks();
+        showCps(0);
+        showTimer(duration);
+        showBestCps();
+    </script>
+</body>
+</html>
