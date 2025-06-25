@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WPM Tester</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        #vanta-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        .card {
+            background: rgba(255,255,255,0.95);
+            padding: 36px 44px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1.5px 6px rgba(79,140,255,0.08);
+            min-width: 350px;
+            max-width: 500px;
+            width: 100%;
+            z-index: 1;
+            position: relative;
+            transition: box-shadow 0.3s;
+        }
+        .card:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(79,140,255,0.12);
+        }
+        h1 {
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #4f8cff;
+            text-shadow: 0 2px 8px #b3d1ff55;
+            font-size: 2.1rem;
+        }
+        .text-to-type {
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-bottom: 18px;
+            color: #333;
+            background: #eaf3ff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 1px 4px #b3d1ff22;
+            transition: background 0.3s;
+        }
+        .highlighted-text {
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-bottom: 18px;
+            min-height: 32px;
+            word-break: break-word;
+            text-align: left;
+            background: #eaf3ff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 1px 4px #b3d1ff22;
+            transition: background 0.3s;
+        }
+        .word-correct { color: #2ecc40; }
+        .word-wrong { color: #ff4136; }
+        .word-upcoming { color: #888; }
+        .input-area {
+            width: 100%;
+            font-size: 1.05rem;
+            padding: 14px;
+            margin-top: 12px;
+            border: 1.5px solid #bfc9d1;
+            border-radius: 8px;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px #b3d1ff11;
+            background: #fafdff;
+            resize: none;
+        }
+        .input-area:focus {
+            border: 1.5px solid #4f8cff;
+            box-shadow: 0 2px 8px #b3d1ff33;
+            background: #f0f7ff;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #e9ecef 60%, #dbeaff 100%);
+            border-radius: 5px;
+            margin: 22px 0 10px 0;
+            overflow: hidden;
+            box-shadow: 0 1px 4px #b3d1ff22;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+            width: 0%;
+            transition: width 0.3s cubic-bezier(.4,2,.6,1);
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #222;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .timer {
+            font-size: 1rem;
+            color: #4f8cff;
+            margin-top: 10px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .btn {
+            margin-top: 22px;
+            padding: 10px 28px;
+            background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #b3d1ff33;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        .btn:hover {
+            background: linear-gradient(90deg, #357ae8 60%, #7fcfff 100%);
+            box-shadow: 0 4px 16px #b3d1ff55;
+            transform: translateY(-2px) scale(1.03);
+        }
+        /* Smooth fade-in for card */
+        .card {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            animation: fadeInCard 0.8s cubic-bezier(.4,2,.6,1) 0.2s forwards;
+        }
+        @keyframes fadeInCard {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Vanta clouds background -->
+    <div id="vanta-bg"></div>
+    <div class="card">
+        <h1>WPM Tester</h1>
+        <h6>Don't forget spacebar after ",".</h6>
+        <div class="text-to-type" id="textToType">The quick brown fox jumps over the lazy dog.</div>
+        <div class="highlighted-text" id="highlightedText" style="margin-bottom: 18px; min-height: 32px;"></div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <textarea class="input-area" id="inputText" placeholder="Start typing here..." oninput="handleInput()" rows="3"></textarea>
+        <div class="timer" id="timer">Time: 0.0s</div>
+        <div class="result">
+            <span id="wpm">WPM: 0</span>
+            <span id="accuracy">Accuracy: 100%</span>
+        </div>
+        <button class="btn" onclick="resetTest()">Restart</button>
+    </div>
+    <script>
+        const sentences = [
+            "My fingers are faster than my brain.",
+    "I type like the wind, but with more typos.",
+    "I can type without looking at the keyboard... sometimes.",
+    "Mhm, misspelling is just my way of adding character.",
+    "My keyboard is my best friend, but it never talks back.",
+    "Who needs spelling when you type this fast?",
+    "The faster I type, the more I misspell.",
+    "Every keystroke is a new adventure."
+        ];
+        let targetText = "";
+        let startTime = null;
+        let timerInterval = null;
+        let isTyping = false;
+
+        function pickRandomSentence() {
+            return sentences[Math.floor(Math.random() * sentences.length)];
+        }
+
+        function updateProgressBar(input, target) {
+            const progress = Math.min((input.length / target.length) * 100, 100);
+            document.getElementById("progressBar").style.width = progress + "%";
+        }
+
+        function updateAccuracy(input, target) {
+            let correct = 0;
+            for (let i = 0; i < input.length; i++) {
+                if (input[i] === target[i]) correct++;
+            }
+            let accuracy = input.length === 0 ? 0 : (correct / target.length) * 100;
+            document.getElementById("accuracy").innerText = `Accuracy: ${accuracy.toFixed(1)}%`;
+        }
+
+        function updateWPM(input, elapsedTime) {
+            let words = input.trim().split(/\s+/).length;
+            if (input.trim() === "") words = 0;
+            let wpm = elapsedTime > 0 ? (words / elapsedTime) * 60 : 0;
+            document.getElementById("wpm").innerText = `WPM: ${Math.round(wpm)}`;
+        }
+
+        function updateTimerDisplay(elapsedTime) {
+            document.getElementById("timer").innerText = `Time: ${elapsedTime.toFixed(1)}s`;
+        }
+
+        function updateHighlightedText(input, target) {
+            const inputWords = input.trim().split(/\s+/);
+            const targetWords = target.split(/\s+/);
+            let html = "";
+
+            for (let i = 0; i < targetWords.length; i++) {
+                if (inputWords[i] === undefined || inputWords[i] === "") {
+                    html += `<span class="word-upcoming">${targetWords[i]}</span>`;
+                } else if (inputWords[i] === targetWords[i]) {
+                    html += `<span class="word-correct">${targetWords[i]}</span>`;
+                } else {
+                    html += `<span class="word-wrong">${targetWords[i]}</span>`;
+                }
+                if (i < targetWords.length - 1) html += " ";
+            }
+            document.getElementById("highlightedText").innerHTML = html;
+        }
+
+        function handleInput() {
+            const inputText = document.getElementById("inputText").value;
+            updateHighlightedText(inputText, targetText);
+
+            if (!isTyping && inputText.length > 0) {
+                isTyping = true;
+                startTime = new Date().getTime();
+                timerInterval = setInterval(updateTimer, 100);
+            }
+            updateProgressBar(inputText, targetText);
+            updateAccuracy(inputText, targetText);
+
+            if (isTyping) {
+                const elapsedTime = (new Date().getTime() - startTime) / 1000;
+                updateWPM(inputText, elapsedTime);
+            }
+
+            if (inputText === targetText) {
+                clearInterval(timerInterval);
+                updateProgressBar(inputText, targetText);
+                updateAccuracy(inputText, targetText);
+                const elapsedTime = (new Date().getTime() - startTime) / 1000;
+                updateWPM(inputText, elapsedTime);
+            }
+        }
+
+        function updateTimer() {
+            if (!isTyping) return;
+            const inputText = document.getElementById("inputText").value;
+            const elapsedTime = (new Date().getTime() - startTime) / 1000;
+            updateTimerDisplay(elapsedTime);
+            updateWPM(inputText, elapsedTime);
+        }
+
+        function resetTest() {
+            targetText = pickRandomSentence();
+            document.getElementById("textToType").innerText = "";
+            document.getElementById("highlightedText").innerHTML = "";
+            document.getElementById("inputText").value = "";
+            document.getElementById("progressBar").style.width = "0%";
+            document.getElementById("wpm").innerText = "WPM: 0";
+            document.getElementById("accuracy").innerText = "Accuracy: 100%";
+            document.getElementById("timer").innerText = "Time: 0.0s";
+            clearInterval(timerInterval);
+            isTyping = false;
+            startTime = null;
+            updateHighlightedText("", targetText);
+        }
+
+        // Initialize on load
+        window.onload = resetTest;
+
+        // Vanta clouds background
+        VANTA.CLOUDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00
+        });
+    </script>
+</body>
+</html>
