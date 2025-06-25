@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #vanta-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.95);
+      padding: 36px 44px;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1.5px 6px rgba(79,140,255,0.08);
+      min-width: 350px;
+      max-width: 400px;
+      width: 100%;
+      z-index: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(30px) scale(0.98);
+      animation: fadeInCard 0.8s cubic-bezier(.4,2,.6,1) 0.2s forwards;
+    }
+    @keyframes fadeInCard {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    h1 {
+      margin-bottom: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #4f8cff;
+      text-shadow: 0 2px 8px #b3d1ff55;
+      font-size: 2.1rem;
+    }
+    label {
+      font-size: 1rem;
+      color: #4f8cff;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: block;
+      text-align: left;
+      width: 100%;
+    }
+    input[type="text"] {
+      width: 100%;
+      font-size: 1.05rem;
+      padding: 12px;
+      margin-bottom: 18px;
+      border: 1.5px solid #bfc9d1;
+      border-radius: 8px;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 4px #b3d1ff11;
+      background: #fafdff;
+    }
+    input[type="text"]:focus {
+      border: 1.5px solid #4f8cff;
+      box-shadow: 0 2px 8px #b3d1ff33;
+      background: #f0f7ff;
+    }
+    button {
+      padding: 10px 28px;
+      background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.08rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #b3d1ff33;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      margin-bottom: 18px;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #357ae8 60%, #7fcfff 100%);
+      box-shadow: 0 4px 16px #b3d1ff55;
+      transform: translateY(-2px) scale(1.03);
+    }
+    #qrcode {
+      margin-top: 18px;
+      background: #eaf3ff;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 1px 4px #b3d1ff22;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @media (max-width: 500px) {
+      .card {
+        min-width: 90vw;
+        padding: 24px 8vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="vanta-bg"></div>
+  <div class="card">
+    <h1>QR Code Generator</h1>
+    <label for="data">Enter text or URL:</label>
+    <input type="text" id="data" placeholder="Enter text or URL" />
+    <button onclick="generateQRCode()">Generate QR Code</button>
+    <div id="qrcode"></div>
+  </div>
+  <script>
+    // Vanta clouds background
+    VANTA.CLOUDS({
+      el: "#vanta-bg",
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.00,
+      minWidth: 200.00
+    });
+
+    // QR code generation
+    function generateQRCode() {
+      const data = document.getElementById('data').value;
+      const qrcodeDiv = document.getElementById('qrcode');
+      qrcodeDiv.innerHTML = ""; // Clear previous
+      if (data) {
+        QRCode.toCanvas(data, { width: 180, margin: 2 }, function (error, canvas) {
+          if (error) {
+            console.error(error);
+            alert('Failed to generate QR code!');
+            return;
+          }
+          qrcodeDiv.appendChild(canvas);
+        });
+      } else {
+        alert('Please enter some text or URL!');
+      }
+    }
+  </script>
+</body>
+</html>
