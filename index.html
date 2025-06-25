@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multitools by Noah</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+        #vanta-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        .fade-in { animation: fadeIn 2s ease-in-out forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .glass-effect {
+            background: rgba(30, 30, 40, 0.45);
+            backdrop-filter: blur(18px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
+        }
+        .hover-scale { transition: transform 0.3s ease; }
+        .hover-scale:hover { transform: scale(1.05); }
+        .gradient-text {
+            background: linear-gradient(45deg, #4fd1c5, #63b3ed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tools-panel {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 1;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    <section id="multitools" class="tools-panel py-20 px-6 md:px-20 fade-in relative">
+        <h3 class="text-4xl font-semibold mb-10 text-black text-center">Multitools</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- QR Code Generator -->
+            <a href="https://toolsbynoah.pages.dev/qr" target="_blank" class="glass-effect p-8 rounded-lg hover-scale flex flex-col items-center transition cursor-pointer">
+                <i class="fas fa-qrcode text-5xl text-teal-400 mb-4"></i>
+                <h4 class="text-2xl font-semibold mb-2">QR Code Generator</h4>
+                <p class="text-gray-300 text-center">Generate QR codes for links, text, and more.</p>
+            </a>
+            <!-- CPS Tester -->
+            <a href="https://toolsbynoah.pages.dev/cps" target="_blank" class="glass-effect p-8 rounded-lg hover-scale flex flex-col items-center transition cursor-pointer">
+                <i class="fas fa-mouse-pointer text-5xl text-teal-400 mb-4"></i>
+                <h4 class="text-2xl font-semibold mb-2">CPS Tester</h4>
+                <p class="text-gray-300 text-center">Test your clicks per second speed.</p>
+            </a>
+            <!-- WPM Tester -->
+            <a href="https://toolsbynoah.pages.dev/wpm" target="_blank" class="glass-effect p-8 rounded-lg hover-scale flex flex-col items-center transition cursor-pointer">
+                <i class="fas fa-keyboard text-5xl text-teal-400 mb-4"></i>
+                <h4 class="text-2xl font-semibold mb-2">WPM Tester</h4>
+                <p class="text-gray-300 text-center">How fast can you type? Find out your words per minute.</p>
+            </a>
+        </div>
+    </section>
+    <script>
+        VANTA.CLOUDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00
+        });
+        // Fade in effect
+        window.onload = () => {
+            document.querySelector('.fade-in').style.opacity = 1;
+        };
+    </script>
+</body>
+</html>
