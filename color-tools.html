@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Picker & Hex-to-RGB Converter</title>
+    <!-- Vanta.js Clouds Background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: #b3d1ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        #vanta-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        .color-picker-card {
+            background: rgba(255,255,255,0.97);
+            box-shadow: 0 4px 24px #4f8cff22;
+            border-radius: 18px;
+            padding: 32px 28px 28px 28px;
+            max-width: 350px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.7s cubic-bezier(.4,2,.6,1);
+            z-index: 1;
+            position: relative;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.98);}
+            to { opacity: 1; transform: translateY(0) scale(1);}
+        }
+        .color-picker-card h2 {
+            color: #4f8cff;
+            font-size: 1.35rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        #colorInput {
+            width: 64px;
+            height: 64px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #4f8cff22;
+            transition: box-shadow 0.2s;
+        }
+        #colorInput:focus {
+            outline: 2px solid #4f8cff;
+        }
+        #colorPreview {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2.5px solid #4f8cff;
+            box-shadow: 0 2px 8px #4f8cff22;
+            transition: background 0.2s, border 0.2s;
+        }
+        .color-label {
+            font-size: 1.08rem;
+            color: #4f8cff;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .color-value {
+            font-family: monospace;
+            font-size: 1.08rem;
+            color: #222;
+        }
+        .color-row {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin: 18px 0 8px 0;
+        }
+        .btn {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 7px;
+            background: linear-gradient(90deg, #4f8cff 60%, #aee2ff 100%);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #b3d1ff33;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            outline: none;
+            position: relative;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn.copied {
+            background: linear-gradient(90deg, #2ecc71 60%, #27ae60 100%);
+        }
+        @media (max-width: 500px) {
+            .color-picker-card {
+                max-width: 96vw;
+                padding: 20px 4vw 18px 4vw;
+            }
+            #colorInput, #colorPreview {
+                width: 48px;
+                height: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    <div class="color-picker-card">
+        <h2>🎨 Color Picker & Hex→RGB</h2>
+        <input id="colorInput" type="color" value="#4f8cff">
+        <div id="colorPreview"></div>
+        <div class="btn-row">
+            <button class="btn" id="randomBtn" title="Pick a random color">
+                <i class="fa-solid fa-dice"></i> Random
+            </button>
+            <button class="btn" id="copyHexBtn" title="Copy Hex">
+                <i class="fa-solid fa-hashtag"></i> Copy Hex
+            </button>
+            <button class="btn" id="copyRgbBtn" title="Copy RGB">
+                <i class="fa-solid fa-fill-drip"></i> Copy RGB
+            </button>
+        </div>
+        <div class="color-row">
+            <span class="color-label">Hex:</span>
+            <span id="hexValue" class="color-value">#4f8cff</span>
+        </div>
+        <div class="color-row">
+            <span class="color-label">RGB:</span>
+            <span id="rgbValue" class="color-value">(79, 140, 255)</span>
+        </div>
+    </div>
+    <script>
+        // Vanta clouds background (like xzx.html)
+        VANTA.CLOUDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00
+        });
+
+        function hexToRgb(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(x=>x+x).join('');
+            const num = parseInt(hex, 16);
+            return [num >> 16, (num >> 8) & 255, num & 255];
+        }
+        function rgbToHex(r, g, b) {
+            return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+        function getRandomColor() {
+            return '#' + Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6, '0');
+        }
+        const colorInput = document.getElementById('colorInput');
+        const colorPreview = document.getElementById('colorPreview');
+        const hexValue = document.getElementById('hexValue');
+        const rgbValue = document.getElementById('rgbValue');
+        const randomBtn = document.getElementById('randomBtn');
+        const copyHexBtn = document.getElementById('copyHexBtn');
+        const copyRgbBtn = document.getElementById('copyRgbBtn');
+
+        function updateColorDisplay() {
+            const hex = colorInput.value;
+            const rgb = hexToRgb(hex);
+            colorPreview.style.background = hex;
+            hexValue.textContent = hex;
+            rgbValue.textContent = `(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        }
+        colorInput.addEventListener('input', updateColorDisplay);
+
+        randomBtn.addEventListener('click', () => {
+            const randomColor = getRandomColor();
+            colorInput.value = randomColor;
+            updateColorDisplay();
+        });
+
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                const oldText = btn.textContent;
+                btn.textContent = "Copied!";
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.textContent = oldText;
+                }, 900);
+            });
+        }
+        copyHexBtn.addEventListener('click', () => {
+            copyToClipboard(hexValue.textContent, copyHexBtn);
+        });
+        copyRgbBtn.addEventListener('click', () => {
+            copyToClipboard(rgbValue.textContent, copyRgbBtn);
+        });
+
+        updateColorDisplay();
+    </script>
+</body>
+</html>
+
