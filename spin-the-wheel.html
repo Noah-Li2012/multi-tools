@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin The Wheel</title>
+    <!-- Vanta.js Clouds Background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.clouds.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            min-height: 100%;
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            width: 100vw;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        #vanta-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        
+        .container {
+            min-height: 100vh;
+            min-width: 100vw;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px 32px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 8px 32px rgba(79,140,255,0.1);
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 12px;
+            /* No overflow/scroll here, let the page scroll */
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #4f8cff;
+            text-shadow: 0 4px 12px #b3d1ff55;
+            font-size: 2.4rem;
+            text-align: center;
+            background: linear-gradient(135deg, #4f8cff, #aee2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, rgba(79, 140, 255, 0.1) 0%, rgba(174, 226, 255, 0.1) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(79, 140, 255, 0.2);
+            width: 100%;
+            max-width: 350px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            color: #4f8cff;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .wheel-container {
+            width: 320px;
+            height: 320px;
+            margin: 30px auto 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: transparent;
+            /* No scroll here, let the page scroll */
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2), inset 0 2px 8px rgba(255,255,255,0.3);
+            transition: transform 6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 4px solid rgba(255,255,255,0.8);
+        }
+        
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        
+        .wheel-segment:hover {
+            filter: brightness(1.2) saturate(1.1);
+            transform: scale(1.02);
+        }
+        
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 35px solid #ff4757;
+            z-index: 10;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            animation: pointerGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pointerGlow {
+            from { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) drop-shadow(0 0 10px rgba(255, 71, 87, 0.3)); }
+            to { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) drop-shadow(0 0 20px rgba(255, 71, 87, 0.6)); }
+        }
+        
+        .result {
+            margin: 25px auto;
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 300px;
+        }
+        
+        .result.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        
+        .spin-btn {
+            margin: 30px auto;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #4f8cff 0%, #aee2ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px #b3d1ff55;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: block;
+            letter-spacing: 1px;
+        }
+        
+        .spin-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .spin-btn:hover::before {
+            left: 100%;
+        }
+        
+        .spin-btn:hover {
+            background: linear-gradient(135deg, #357ae8 0%, #7fcfff 100%);
+            box-shadow: 0 12px 32px #b3d1ff77;
+            transform: translateY(-3px) scale(1.05);
+        }
+        
+        .spin-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        .spin-btn:disabled {
+            background: linear-gradient(135deg, #ccc 0%, #ddd 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .customize-section {
+            margin-top: 30px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            color: #4f8cff;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(79, 140, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(79, 140, 255, 0.1);
+        }
+        
+        .input-group label {
+            font-size: 0.95rem;
+            color: #4f8cff;
+            font-weight: 600;
+            min-width: 80px;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e8ff;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .input-group input:focus {
+            border: 2px solid #4f8cff;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.1);
+        }
+        
+        .add-segment-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+        
+        .add-segment-btn:hover {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(46, 204, 113, 0.4);
+        }
+        
+        .segment-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 2px solid #e0e8ff;
+            border-radius: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            scrollbar-width: thin;
+            scrollbar-color: #4f8cff #f0f0f0;
+            width: 100%;
+        }
+        
+        .segment-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .segment-list::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+        
+        .segment-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #4f8cff, #aee2ff);
+            border-radius: 10px;
+        }
+        
+        .segment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        
+        .segment-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .remove-segment {
+            background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(255, 71, 87, 0.3);
+        }
+        
+        .remove-segment:hover {
+            background: linear-gradient(135deg, #ff3742 0%, #ff2d3a 100%);
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 600px) {
+            .card {
+                padding: 20px 4vw;
+                min-width: 0;
+                max-width: 98vw;
+            }
+            .wheel-container {
+                width: 90vw;
+                height: 90vw;
+                max-width: 90vw;
+                max-height: 90vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    <div class="container">
+        <div class="card">
+            <h1>Spin The Wheel</h1>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="totalSpins">0</span>
+                    <span class="stat-label">Total Spins</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="segmentsCount">6</span>
+                    <span class="stat-label">Segments</span>
+                </div>
+            </div>
+            
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <canvas id="wheelCanvas" width="320" height="320" style="display:block;margin:auto;"></canvas>
+            </div>
+            
+            <div class="result" id="result"></div>
+            
+            <button class="spin-btn" id="spinBtn" onclick="spinWheel()">🎲 SPIN THE WHEEL!</button>
+            
+            <div class="customize-section">
+                <div class="section-title">Customize Your Wheel</div>
+                <div class="input-group">
+                    <label>Add Item:</label>
+                    <input type="text" id="newSegment" placeholder="Enter item name...">
+                    <button class="add-segment-btn" onclick="addSegment()">➕ Add</button>
+                </div>
+                <div class="segment-list" id="segmentList">
+                    <!-- Segment items will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Vanta clouds background (restored to default style)
+        VANTA.CLOUDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00
+        });
+
+        // Emoji pool for random selection
+        const emojiPool = [
+            "🍕","🍔","🍟","🌭","🍿","🥓","🥚","🍗","🍖","🍤","🍣","🍦","🍩","🍪","🍫","🍬","🍭","🍮","🍯","🍎","🍉","🍇","🍓","🍒","🍑","🍍","🥝","🥑","🥦","🥕","🌽","🥒","🥬","🥔","🍠","🍞","🥨","🧀","🍖","🍗","🍤","🍣","🍦","🍩","🍪","🍫","🍬","🍭","🍮","🍯","🍎","🍉","🍇","🍓","🍒","🍑","🍍","🥝","🥑","🥦","🥕","🌽","🥒","🥬","🥔","🍠","🍞","🥨","🧀","🍖","🍗","🍤","🍣","🍦","🍩","🍪","🍫","🍬","🍭","🍮","🍯","🍎","🍉","🍇","🍓","🍒","🍑","🍍","🥝","🥑","🥦","🥕","🌽","🥒","🥬","🥔","🍠","🍞","🥨","🧀"
+        ];
+
+        let segments = [
+            { text: "🍕 Pizza", color: "#ff6b6b" },
+            { text: "🍔 Burger", color: "#4ecdc4" },
+            { text: "🍣 Sushi", color: "#45b7d1" },
+            { text: "🍦 Ice Cream", color: "#96ceb4" },
+            { text: "☕ Coffee", color: "#feca57" },
+            { text: "🍝 Pasta", color: "#ff9ff3" }
+        ];
+        let isSpinning = false;
+        let currentRotation = 0;
+        let totalSpins = 0;
+        const colors = [
+            "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#feca57", "#ff9ff3",
+            "#a8e6cf", "#dcedc1", "#ffd3b6", "#ffaaa5", "#ff8b94", "#a8e6cf"
+        ];
+
+        function getRandomEmoji() {
+            return emojiPool[Math.floor(Math.random() * emojiPool.length)];
+        }
+
+        function ensureEmoji(text) {
+            // If the first character is an emoji, return as is
+            if (/^[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]/.test(text.trim()[0])) {
+                return text;
+            }
+            return getRandomEmoji() + " " + text;
+        }
+
+        function drawWheel() {
+            const canvas = document.getElementById('wheelCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const center = size / 2;
+            const radius = center - 10;
+            ctx.clearRect(0, 0, size, size);
+
+            const segmentAngle = 2 * Math.PI / segments.length;
+
+            // Draw segments
+            for (let i = 0; i < segments.length; i++) {
+                // Segment arc
+                ctx.beginPath();
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, i * segmentAngle, (i + 1) * segmentAngle);
+                ctx.closePath();
+                ctx.fillStyle = segments[i].color;
+                ctx.fill();
+
+                // Draw text
+                ctx.save();
+                ctx.translate(center, center);
+                ctx.rotate(i * segmentAngle + segmentAngle / 2);
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.font = "bold 22px Segoe UI, Arial, sans-serif";
+                ctx.fillStyle = "#fff";
+                // Emoji + text
+                let label = segments[i].text;
+                ctx.shadowColor = "rgba(0,0,0,0.3)";
+                ctx.shadowBlur = 4;
+                ctx.fillText(label, radius * 0.65, 0);
+                ctx.restore();
+            }
+        }
+
+        function updateSegmentList() {
+            const list = document.getElementById('segmentList');
+            list.innerHTML = '';
+            segments.forEach((segment, index) => {
+                const item = document.createElement('div');
+                item.className = 'segment-item';
+                item.innerHTML = `
+                    <span>${segment.text}</span>
+                    <button class="remove-segment" onclick="removeSegment(${index})">✕</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('segmentsCount').textContent = segments.length;
+            document.getElementById('totalSpins').textContent = totalSpins;
+        }
+
+        function addSegment() {
+            const input = document.getElementById('newSegment');
+            let text = input.value.trim();
+            if (text && segments.length < 12) {
+                text = ensureEmoji(text);
+                const color = colors[segments.length % colors.length];
+                segments.push({ text: text, color });
+                input.value = '';
+                createWheel();
+                setTimeout(() => {
+                    const card = document.querySelector('.card');
+                    card.scrollTop = card.scrollHeight;
+                }, 100);
+            } else if (segments.length >= 12) {
+                alert('Maximum 12 segments allowed for optimal visibility!');
+            }
+        }
+
+        function removeSegment(index) {
+            segments.splice(index, 1);
+            createWheel();
+        }
+
+        function spinWheel() {
+            if (isSpinning || segments.length === 0) return;
+            isSpinning = true;
+            totalSpins++;
+            updateStats();
+            const spinBtn = document.getElementById('spinBtn');
+            const result = document.getElementById('result');
+            spinBtn.disabled = true;
+            result.classList.remove('show');
+            // Enhanced random rotation with more realistic physics
+            const spins = 8 + Math.random() * 7; // 8-15 spins
+            const segmentAngle = 360 / segments.length;
+            const randomSegment = Math.floor(Math.random() * segments.length);
+            const finalAngle = currentRotation + (spins * 360) + (randomSegment * segmentAngle);
+            // Animate the canvas wheel
+            animateWheel(currentRotation, finalAngle, 6000, () => {
+                const normalizedAngle = (finalAngle % 360 + 360) % 360;
+                const segmentIndex = Math.floor(((360 - normalizedAngle) % 360) / segmentAngle);
+                const winningSegment = segments[segmentIndex];
+                result.textContent = `🎉 ${winningSegment.text} 🎉`;
+                result.classList.add('show');
+                isSpinning = false;
+                spinBtn.disabled = false;
+                currentRotation = finalAngle;
+                setTimeout(() => {
+                    result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            });
+        }
+
+        function animateWheel(from, to, duration, callback) {
+            const canvas = document.getElementById('wheelCanvas');
+            const start = performance.now();
+            function animate(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const angle = from + (to - from) * eased;
+                canvas.style.transform = `rotate(${angle}deg)`;
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    callback();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function createWheel() {
+            drawWheel();
+            updateSegmentList();
+            updateStats();
+        }
+
+        // Initialize wheel
+        createWheel();
+
+        // Enter key to add segment
+        document.getElementById('newSegment').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addSegment();
+            }
+        });
+
+        // Smooth scroll behavior for the entire page
+        document.documentElement.style.scrollBehavior = 'smooth';
+    </script>
+</body>
+</html>
+
